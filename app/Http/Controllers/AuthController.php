@@ -9,12 +9,14 @@ use App\Models\User;
 
 class AuthController extends Controller
 {   
-   public function registrar(Request $request)
+    // Registro de usuario
+    public function registrar(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            'role'     => 'required|in:admin,doctor,paciente'
         ]);
 
         if ($validator->fails()) {
@@ -27,9 +29,9 @@ class AuthController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
+            'role'     => $request->role,
         ]);
 
-       
         $token = $user->createToken('api_token')->plainTextToken;
 
         return response()->json([
@@ -38,7 +40,8 @@ class AuthController extends Controller
         ], 201);
     }
 
-        public function login(Request $request)
+    // Login
+    public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email'    => 'required|string|email|max:255',
@@ -66,23 +69,30 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'token'   => $token,
+            'role'    => $user->role, 
+            'user'    => $user
         ], 200);
     }
 
-        public function logout(Request $request)
+    // Logout
+    public function logout(Request $request)
     {
-          return response()->json([
+        // Eliminamos solo el token en uso
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
             'success' => true,
             'message' => 'Sesión cerrada correctamente',
         ], 200);
     }
 
-        public function me(Request $request)
+    // Información del usuario autenticado
+    public function me(Request $request)
     {
         return response()->json([
             'success' => true,
             'user'    => $request->user(),
+            'role'    => $request->user()->role, 
         ], 200);
     }
-
 }

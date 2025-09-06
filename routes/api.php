@@ -12,7 +12,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
+// 🔹 Autenticación
 Route::post('/registro', [AuthController::class, 'registrar']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -21,40 +21,55 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 });
 
+// 🔹 Rutas protegidas por rol
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // Rutas para Pacientes (solo admin)
+    Route::get('ListarPacientes', [PacienteController::class, 'index']);
+    Route::post('CrearPacientes', [PacienteController::class, 'store']);
+    Route::get('MostrarPacientes/{id}', [PacienteController::class, 'show']);
+    Route::put('ActualizarPacientes/{id}', [PacienteController::class, 'update']);
+    Route::delete('EliminarPacientes/{id}', [PacienteController::class, 'destroy']);
 
-// Rutas para Pacientes
-route::get('ListarPacientes', [PacienteController::class, 'index']);
-route::post('CrearPacientes', [PacienteController::class, 'store']);
-route::get('MostrarPacientes/{id}', [PacienteController::class, 'show']);
-route::put('ActualizarPacientes/{id}', [PacienteController::class, 'update']);
-route::delete('EliminarPacientes/{id}', [PacienteController::class, 'destroy']);
+    // Rutas para Médicos (solo admin)
+    Route::get('ListarMedicos', [MedicoController::class, 'index']);
+    Route::post('CrearMedicos', [MedicoController::class, 'store']);
+    Route::get('MostrarMedicos/{id}', [MedicoController::class, 'show']);
+    Route::put('ActualizarMedicos/{id}', [MedicoController::class, 'update']);
+    Route::delete('EliminarMedicos/{id}', [MedicoController::class, 'destroy']);
+});
 
-// Rutas para Médicos
-route::get('ListarMedicos', [MedicoController::class, 'index']);
-route::post('CrearMedicos', [MedicoController::class, 'store']);
-route::get('MostrarMedicos/{id}', [MedicoController::class, 'show']);
-route::put('ActualizarMedicos/{id}', [MedicoController::class, 'update']);
-route::delete('EliminarMedicos/{id}', [MedicoController::class, 'destroy']);
+// 🔹 Rutas accesibles por admin y doctor
+Route::middleware(['auth:sanctum', 'role:admin,doctor'])->group(function () {
+    // Rutas para Citas
+    Route::get('ListarCitas', [CitaController::class, 'index']);
+    Route::post('CrearCitas', [CitaController::class, 'store']);
+    Route::get('MostrarCitas/{id}', [CitaController::class, 'show']);
+    Route::put('ActualizarCitas/{id}', [CitaController::class, 'update']);
+    Route::delete('EliminarCitas/{id}', [CitaController::class, 'destroy']);
+});
 
-// Rutas para Citas
-route::get('ListarCitas', [CitaController::class, 'index']);
-route::post('CrearCitas', [CitaController::class, 'store']);
-route::get('MostrarCitas/{id}', [CitaController::class, 'show']);
-route::put('ActualizarCitas/{id}', [CitaController::class, 'update']);
-route::delete('EliminarCitas/{id}', [CitaController::class, 'destroy']);
+// 🔹 Rutas accesibles por doctor y paciente
+Route::middleware(['auth:sanctum', 'role:doctor,paciente'])->group(function () {
+    // Rutas para Historial Médico
+    Route::get('ListarHistorialMedico', [HistorialMedicoController::class, 'index']);
+    Route::post('CrearHistorialMedico', [HistorialMedicoController::class, 'store']);
+    Route::get('MostrarHistorialMedico/{id}', [HistorialMedicoController::class, 'show']);
+    Route::put('ActualizarHistorialMedico/{id}', [HistorialMedicoController::class, 'update']);
+    Route::delete('EliminarHistorialMedico/{id}', [HistorialMedicoController::class, 'destroy']);
+});
 
-// Rutas para Historial Médico
-route::get('ListarHistorialMedico', [HistorialMedicoController::class, 'index']);
-route::post('CrearHistorialMedico', [HistorialMedicoController::class, 'store']);
-route::get('MostrarHistorialMedico/{id}', [HistorialMedicoController::class, 'show']);
-route::put('ActualizarHistorialMedico/{id}', [HistorialMedicoController::class, 'update']);
-route::delete('EliminarHistorialMedico/{id}', [HistorialMedicoController::class, 'destroy']);
+// 🔹 Rutas adicionales con roles combinados
+Route::middleware(['auth:sanctum', 'role:admin,doctor'])->group(function () {
+    Route::get('Pacientes/{id}/Citas', [PacienteController::class, 'citasPorPaciente']);
+    Route::get('Medicos/{id}/Citas', [MedicoController::class, 'citasPorMedico']);
+    Route::get('Citas/{id}/Historial', [CitaController::class, 'historialPorCita']);
+});
 
-// Rutas adicionales
-route::get('Pacientes/{id}/Citas', [PacienteController::class, 'citasPorPaciente']);
-route::get('Medicos/{id}/Citas', [MedicoController::class, 'citasPorMedico']);
-route::get('Citas/{id}/Historial', [CitaController::class, 'historialPorCita']);
-route::get('pacientes/mayores-60', [PacienteController::class, 'pacientesMayores60']);
-route::get('medicos/especialidad/{especialidad}', [MedicoController::class, 'medicosPorEspecialidad']);
-route::get('historial/paciente/{pacienteId}', [HistorialMedicoController::class, 'historialPorPaciente']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('pacientes/mayores-60', [PacienteController::class, 'pacientesMayores60']);
+    Route::get('medicos/especialidad/{especialidad}', [MedicoController::class, 'medicosPorEspecialidad']);
+});
 
+Route::middleware(['auth:sanctum', 'role:doctor,paciente'])->group(function () {
+    Route::get('historial/paciente/{pacienteId}', [HistorialMedicoController::class, 'historialPorPaciente']);
+});
