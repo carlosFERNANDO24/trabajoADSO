@@ -84,15 +84,39 @@ class HistorialMedicoController extends Controller
     }
 
     public function historialPorPaciente(string $pacienteId)
-{
-    $historial = HistorialMedico::with(['paciente', 'medico', 'cita'])
-                ->where('paciente_id', $pacienteId)
-                ->get();
-    
-    if ($historial->isEmpty()) {
-        return response()->json(['message' => 'No se encontró historial médico para este paciente'], 404);
+    {
+        $historial = HistorialMedico::with(['paciente', 'medico', 'cita'])
+                    ->where('paciente_id', $pacienteId)
+                    ->get();
+        
+        if ($historial->isEmpty()) {
+            return response()->json(['message' => 'No se encontró historial médico para este paciente'], 404);
+        }
+        
+        return response()->json($historial);
     }
-    
-    return response()->json($historial);
+
+    /**
+     * 🔹 Mostrar solo el historial médico del paciente autenticado
+     */
+    public function miHistorial(Request $request)
+    {
+        $user = $request->user();
+
+        // Aseguramos que sea un paciente
+        if ($user->role !== 'paciente') {
+            return response()->json(['message' => 'Acceso denegado'], 403);
+        }
+
+        $historial = HistorialMedico::with(['paciente', 'medico', 'cita'])
+                    ->where('paciente_id', $user->id)
+                    ->get();
+
+        if ($historial->isEmpty()) {
+            return response()->json(['message' => 'No tienes historial médico registrado'], 404);
+        }
+
+        return response()->json($historial);
+    }
 }
-}
+ 

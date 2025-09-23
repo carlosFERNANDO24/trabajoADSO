@@ -15,15 +15,15 @@ class CitaController extends Controller
     }
 
     public function historialPorCita(string $id)
-{
-    $cita = Cita::with('historialMedico')->find($id);
-    
-    if (!$cita) {
-        return response()->json(['message' => 'Cita no encontrada'], 404);
+    {
+        $cita = Cita::with('historialMedico')->find($id);
+        
+        if (!$cita) {
+            return response()->json(['message' => 'Cita no encontrada'], 404);
+        }
+        
+        return response()->json($cita->historialMedico);
     }
-    
-    return response()->json($cita->historialMedico);
-}
 
     public function store(Request $request)
     {
@@ -92,5 +92,22 @@ class CitaController extends Controller
         return response()->json(['message' => 'Cita eliminada correctamente']);
     }
 
-    
+    /**
+     * 🔹 Mostrar solo las citas del paciente autenticado
+     */
+    public function misCitas(Request $request)
+    {
+        $user = $request->user();
+
+        // Aseguramos que sea un paciente
+        if ($user->role !== 'paciente') {
+            return response()->json(['message' => 'Acceso denegado'], 403);
+        }
+
+        $citas = Cita::with(['paciente', 'medico'])
+                    ->where('paciente_id', $user->id)
+                    ->get();
+
+        return response()->json($citas);
+    }
 }
