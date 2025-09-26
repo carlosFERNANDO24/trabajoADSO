@@ -14,6 +14,7 @@ class HistorialMedicoController extends Controller
         return response()->json($historiales);
     }
 
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -97,7 +98,7 @@ class HistorialMedicoController extends Controller
     }
 
     /**
-     * 🔹 Mostrar solo el historial médico del paciente autenticado
+     * ✅ FUNCIÓN AGREGADA: Mostrar solo el historial del paciente autenticado
      */
     public function miHistorial(Request $request)
     {
@@ -108,15 +109,10 @@ class HistorialMedicoController extends Controller
             return response()->json(['message' => 'Acceso denegado'], 403);
         }
 
-        $historial = HistorialMedico::with(['paciente', 'medico', 'cita'])
-                    ->where('paciente_id', $user->id)
-                    ->get();
+        $historiales = HistorialMedico::with(['paciente', 'medico', 'cita'])
+                        ->where('paciente_id', $user->id)
+                        ->get();
 
-        if ($historial->isEmpty()) {
-            return response()->json(['message' => 'No tienes historial médico registrado'], 404);
-        }
-
-        return response()->json($historial);
+        return response()->json($historiales);
     }
 }
- 

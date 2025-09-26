@@ -9,26 +9,31 @@ use Symfony\Component\HttpFoundation\Response;
 class RoleMiddleware
 {
     /**
-     * Manejar la solicitud entrante.
+     * Maneja la validación de roles.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @param  mixed ...$roles
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return mixed
      */
-    public function handle(Request $request, Closure $next, ...$roles): Response
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        // Verifica autenticación con Sanctum
-        if (!$request->user()) {
-            return response()->json(['message' => 'No autenticado'], 401);
+        $user = $request->user(); 
+
+        if (!$user) {
+            return response()->json(['error' => 'No autenticado'], 401);
         }
 
-        // Rol actual del usuario autenticado
-        $userRole = $request->user()->role;
+        // ✅ CORREGIDO: Cambiado 'rol' por 'role'
+        // Si es admin, tiene acceso a todo
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
 
-        // Validar si el rol del usuario está dentro de los permitidos
-        if (!in_array($userRole, $roles)) {
-            return response()->json(['message' => 'No tienes permisos para acceder a esta ruta'], 403);
+        // ✅ CORREGIDO: Cambiado 'rol' por 'role'
+        // Si no es admin, validamos que su rol esté permitido
+        if (!in_array($user->role, $roles)) {
+            return response()->json(['error' => 'No tienes acceso a esta ruta'], 403);
         }
 
         return $next($request);
