@@ -103,4 +103,48 @@ class PacienteController extends Controller
     
     return response()->json($pacientes);
 }
+    
+    public function storeMiPaciente(Request $request)
+    {
+        $user = $request->user();
+
+        // ✅ CORRECCIÓN: Usar el email para validar que no exista ya un perfil de paciente
+        $pacienteExistente = Paciente::where('email', $user->email)->first();
+        if ($pacienteExistente) {
+            return response()->json(['message' => 'El paciente ya tiene un perfil creado.'], 409);
+        }
+        
+        $validator = Validator::make($request->all(), [
+            'documento' => 'required|string|max:20|unique:pacientes',
+            'apellido' => 'required|string|max:255',
+            'fecha_nacimiento' => 'required|date',
+            'genero' => 'required|in:M,F',
+            'telefono' => 'nullable|string|max:15',
+            'direccion' => 'nullable|string|max:500'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $paciente = Paciente::create(array_merge(
+            $validator->validated(),
+            // ✅ CORRECCIÓN: Usar el email del usuario para vincular el paciente
+            ['nombre' => $user->name, 'email' => $user->email]
+        ));
+
+        return response()->json(['message' => 'Perfil de paciente creado exitosamente', 'paciente' => $paciente], 201);
+    }
+
+    public function getMyProfile(Request $request)
+    {
+        $user = $request->user();
+        $paciente = Paciente::where('email', $user->email)->first();
+
+        if (!$paciente) {
+            return response()->json(['message' => 'Perfil de paciente no encontrado.'], 404);
+        }
+
+        return response()->json($paciente);
+    }
 }

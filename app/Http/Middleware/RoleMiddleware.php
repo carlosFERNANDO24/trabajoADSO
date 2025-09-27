@@ -9,29 +9,23 @@ use Symfony\Component\HttpFoundation\Response;
 class RoleMiddleware
 {
     /**
-     * Maneja la validación de roles.
+     * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  mixed ...$roles
-     * @return mixed
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        $user = $request->user(); 
+        $user = $request->user();
 
         if (!$user) {
             return response()->json(['error' => 'No autenticado'], 401);
         }
 
-        // ✅ CORREGIDO: Cambiado 'rol' por 'role'
-        // Si es admin, tiene acceso a todo
-        if ($user->role === 'admin') {
-            return $next($request);
-        }
-
-        // ✅ CORREGIDO: Cambiado 'rol' por 'role'
-        // Si no es admin, validamos que su rol esté permitido
+        // Check if the user has a role that is in the list of allowed roles.
+        // This is the key part that was previously flawed.
         if (!in_array($user->role, $roles)) {
             return response()->json(['error' => 'No tienes acceso a esta ruta'], 403);
         }

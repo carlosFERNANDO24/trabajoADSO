@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HistorialMedico;
+use App\Models\Paciente; // ✅ Importa el modelo Paciente
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -104,13 +105,16 @@ class HistorialMedicoController extends Controller
     {
         $user = $request->user();
 
+        // ✅ CORRECCIÓN: Buscar el paciente por email para obtener su ID
+        $paciente = Paciente::where('email', $user->email)->first();
+
         // Aseguramos que sea un paciente
-        if ($user->role !== 'paciente') {
-            return response()->json(['message' => 'Acceso denegado'], 403);
+        if (!$paciente) {
+            return response()->json(['message' => 'Acceso denegado. Perfil de paciente no encontrado.'], 403);
         }
 
         $historiales = HistorialMedico::with(['paciente', 'medico', 'cita'])
-                        ->where('paciente_id', $user->id)
+                        ->where('paciente_id', $paciente->id)
                         ->get();
 
         return response()->json($historiales);

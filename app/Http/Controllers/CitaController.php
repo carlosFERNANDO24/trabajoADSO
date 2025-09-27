@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cita;
+use App\Models\Paciente; // ✅ Importa el modelo Paciente
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -100,13 +101,15 @@ class CitaController extends Controller
     {
         $user = $request->user();
 
-        // Aseguramos que sea un paciente
-        if ($user->role !== 'paciente') {
-            return response()->json(['message' => 'Acceso denegado'], 403);
+        // ✅ CORRECCIÓN: Buscar el paciente por email para obtener su ID
+        $paciente = Paciente::where('email', $user->email)->first();
+
+        if (!$paciente) {
+            return response()->json(['message' => 'Acceso denegado. Perfil de paciente no encontrado.'], 403);
         }
 
         $citas = Cita::with(['paciente', 'medico'])
-                    ->where('paciente_id', $user->id)
+                    ->where('paciente_id', $paciente->id)
                     ->get();
 
         return response()->json($citas);
@@ -116,30 +119,29 @@ class CitaController extends Controller
     {
         $user = $request->user();
 
-        // Aseguramos que sea un paciente
-        if ($user->role !== 'paciente') {
-            return response()->json(['message' => 'Acceso denegado'], 403);
+        $paciente = Paciente::where('email', $user->email)->first();
+
+        // Aseguramos que el usuario tiene un perfil de paciente
+        if (!$paciente) {
+            return response()->json(['error' => 'El usuario no tiene un registro de paciente asociado.'], 403);
         }
+        
+        $request->merge(['paciente_id' => $paciente->id]);
 
         $validator = Validator::make($request->all(), [
             'fecha_hora' => 'required|date',
             'estado' => 'required|in:programada,completada,cancelada',
             'motivo_consulta' => 'required|string|max:1000',
             'observaciones' => 'nullable|string|max:1000',
-            'medico_id' => 'required|exists:medicos,id' // El paciente_id se asigna automáticamente
+            'medico_id' => 'required|exists:medicos,id',
+            'paciente_id' => 'required|exists:pacientes,id'
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $data = $validator->validated();
-        $data['paciente_id'] = $user->id; // Asigna el ID del usuario autenticado
-
-        $cita = Cita::create($data);
+        $cita = Cita::create($validator->validated());
         return response()->json($cita->load(['paciente', 'medico']), 201);
     }
 }
-
-
-
