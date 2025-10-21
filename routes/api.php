@@ -12,7 +12,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// 🔹 Autenticación
+//  Autenticación
 Route::post('/registro', [AuthController::class, 'registrar']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -23,7 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🔹 Admin: Acceso TOTAL
+|  Admin: Acceso TOTAL
 |--------------------------------------------------------------------------
 */
 // Rutas exclusivas para el administrador
@@ -36,7 +36,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🔹 Admin & Doctor: Acceso compartido
+|  Admin & Doctor: Acceso compartido
 |--------------------------------------------------------------------------
 */
 // Rutas compartidas entre administradores y doctores
@@ -63,7 +63,7 @@ Route::middleware(['auth:sanctum', 'role:admin,doctor'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🔹 Admin, Doctor & Paciente: Acceso de solo lectura a médicos
+|  Admin, Doctor & Paciente: Acceso de solo lectura a médicos
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:admin,doctor,paciente'])->group(function () {
@@ -75,7 +75,7 @@ Route::middleware(['auth:sanctum', 'role:admin,doctor,paciente'])->group(functio
 
 /*
 |--------------------------------------------------------------------------
-| 🔹 Paciente: Ver mis citas + Ver mi historial
+|  Paciente: Ver mis citas + Ver mi historial
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:paciente'])->group(function () {
@@ -84,11 +84,11 @@ Route::middleware(['auth:sanctum', 'role:paciente'])->group(function () {
     // Ver solo MI historial
     Route::get('MiHistorialMedico', [HistorialMedicoController::class, 'miHistorial']);
 
-    // ✅ Nuevas rutas para pacientes
+    //  Nuevas rutas para pacientes
     Route::post('CrearMiCita', [CitaController::class, 'crearMiCita']);
     Route::put('ActualizarMiCita/{id}', [CitaController::class, 'update']);
     Route::delete('EliminarMiCita/{id}', [CitaController::class, 'destroy']);
     
-    // ✅ NUEVO: Ruta para que el paciente cree su propio perfil
+    //  Ruta para que el paciente cree su propio perfil
     Route::post('CrearMiPaciente', [PacienteController::class, 'storeMiPaciente']);
 });
