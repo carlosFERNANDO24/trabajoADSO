@@ -227,4 +227,3 @@ class CitaController extends Controller
         return response()->json(['message' => 'Cita eliminada exitosamente']);
     }
 }
-
